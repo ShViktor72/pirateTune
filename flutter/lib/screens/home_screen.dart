@@ -53,7 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _searchTracks() async {
-    final query = _searchController.text.trim();
+    final query = _searchController.text.trim().toLowerCase();
     if (query.isEmpty) return;
 
     setState(() {
@@ -72,8 +72,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
+
+        // фильтрация по совпадению в artist или title
+        final filteredTracks = data
+            .map((item) => Track.fromJson(item))
+            .where(
+              (track) =>
+                  track.artist.toLowerCase().contains(query) ||
+                  track.title.toLowerCase().contains(query),
+            )
+            .toList();
+
         setState(() {
-          _tracks = data.map((item) => Track.fromJson(item)).toList();
+          _tracks = filteredTracks;
         });
       } else {
         throw Exception('Ошибка сервера');
