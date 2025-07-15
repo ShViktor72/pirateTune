@@ -3,7 +3,6 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../services/settings_service.dart';
 import '../services/download_service.dart';
-import 'package:path/path.dart' as p;
 import '../widgets/track_card.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -117,12 +116,14 @@ class _HomeScreenState extends State<HomeScreen> {
         track.url,
         folderPath,
         fileName,
+        title: track.title,
+        artist: track.artist,
         onProgress: (received, total) {
           if (total != -1) {
             final percent = (received / total * 100);
-            debugPrint(
-              'Скачивание ${track.title}: ${percent.toStringAsFixed(0)}%',
-            );
+            // debugPrint(
+            //   'Скачивание ${track.title}: ${percent.toStringAsFixed(0)}%',
+            // );
 
             setState(() {
               status.progress = percent;
