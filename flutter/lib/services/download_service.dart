@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:path/path.dart' as p;
 import 'package:flutter_taggy/flutter_taggy.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 
 class DownloadService {
   static final Dio _dio = Dio();
@@ -45,7 +46,6 @@ class DownloadService {
 
       // Читать теги после записи
       // await _readTags(savePath, label: 'После записи');
-
     } catch (e) {
       print('Ошибка при скачивании: $e');
       rethrow;
@@ -72,26 +72,35 @@ class DownloadService {
 
     print('Запись тегов: title="$title", artist="$artist"');
 
-    await Taggy.writePrimary(
-      path: filePath,
-      tag: tag,
-      keepOthers: true,
-    );
+    await Taggy.writePrimary(path: filePath, tag: tag, keepOthers: true);
 
     print('Теги успешно записаны.');
   }
 
   /// Проверка и запрос разрешений
   static Future<void> _checkStoragePermission() async {
-    if (Platform.isAndroid) {
-      final status = await Permission.manageExternalStorage.status;
+    if (!Platform.isAndroid) return;
+
+    final deviceInfo = DeviceInfoPlugin();
+    final androidInfo = await deviceInfo.androidInfo;
+    final sdkInt = androidInfo.version.sdkInt;
+
+    if (sdkInt >= 33) {
+      // Android 13+: используем доступ к медиафайлам
+      final status = await Permission.audio.request();
       if (!status.isGranted) {
-        final result = await Permission.manageExternalStorage.request();
-        if (!result.isGranted) {
-          throw Exception('Разрешение MANAGE_EXTERNAL_STORAGE не получено');
-        }
+        throw Exception(
+          'Нет разрешения на доступ к аудиофайлам (READ_MEDIA_AUDIO)',
+        );
+      }
+    } else {
+      // Android 12 и ниже: обычный доступ к хранилищу
+      final status = await Permission.storage.request();
+      if (!status.isGranted) {
+        throw Exception(
+          'Нет разрешения на доступ к хранилищу (READ/WRITE_EXTERNAL_STORAGE)',
+        );
       }
     }
   }
 }
-
