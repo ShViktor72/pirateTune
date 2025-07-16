@@ -132,9 +132,9 @@ class _HomeScreenState extends State<HomeScreen> {
         onProgress: (received, total) {
           if (total != -1) {
             final percent = (received / total * 100);
-            // debugPrint(
-            //   'Скачивание ${track.title}: ${percent.toStringAsFixed(0)}%',
-            // );
+            debugPrint(
+              'Скачивание ${track.title}: ${percent.toStringAsFixed(0)}%',
+            );
 
             setState(() {
               status.progress = percent;

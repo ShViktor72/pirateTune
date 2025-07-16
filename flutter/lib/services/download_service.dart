@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:path/path.dart' as p;
 import 'package:flutter_taggy/flutter_taggy.dart';
-import 'package:flutter_media_metadata/flutter_media_metadata.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class DownloadService {
@@ -37,7 +36,7 @@ class DownloadService {
       print('Файл успешно скачан.');
 
       // Читать теги перед записью
-      await _readTags(savePath, label: 'До записи');
+      // await _readTags(savePath, label: 'До записи');
 
       // Если есть теги — записываем
       if (title != null || artist != null) {
@@ -45,7 +44,7 @@ class DownloadService {
       }
 
       // Читать теги после записи
-      await _readTags(savePath, label: 'После записи');
+      // await _readTags(savePath, label: 'После записи');
 
     } catch (e) {
       print('Ошибка при скачивании: $e');
@@ -82,24 +81,6 @@ class DownloadService {
     print('Теги успешно записаны.');
   }
 
-  /// Прочитать теги с помощью flutter_media_metadata
-  static Future<void> _readTags(String filePath, {String? label}) async {
-    final file = File(filePath);
-    if (!file.existsSync()) {
-      print('Файл не найден для чтения тегов: $filePath');
-      return;
-    }
-
-    final metadataRetriever = MetadataRetriever();
-    final metadata = await MetadataRetriever.fromFile(file);
-
-    print('Теги $label:');
-    print('  Название: ${metadata.trackName}');
-    print('  Артист:   ${metadata.trackArtistNames?.join(", ")}');
-    print('  Альбом:   ${metadata.albumName}');
-    print('  Год:      ${metadata.year}');
-  }
-
   /// Проверка и запрос разрешений
   static Future<void> _checkStoragePermission() async {
     if (Platform.isAndroid) {
@@ -113,3 +94,4 @@ class DownloadService {
     }
   }
 }
+
