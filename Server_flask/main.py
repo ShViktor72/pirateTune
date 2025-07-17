@@ -2,8 +2,20 @@ from flask import Flask, request, jsonify
 import requests
 from bs4 import BeautifulSoup
 import os
+from datetime import datetime
 
 app = Flask(__name__)
+
+LOG_FILE = "server.log"
+
+def log_query(query):
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    with open(LOG_FILE, "a", encoding="utf-8") as f:
+        f.write(f"{timestamp} — query: {query}\n")
+
+@app.route('/')
+def index():
+    return 'Сервер работает', 200
 
 @app.route("/api/address")
 def get_address():
@@ -13,8 +25,6 @@ def get_address():
         return jsonify({"address": address})
     else:
         return jsonify({"error": "Address not found"}), 404
-
-
 
 def search_tracks(query):
     url = f"https://muzofond.fm/search/{query}"
@@ -40,7 +50,6 @@ def search_tracks(query):
         if artist_element and track_element and mp3_url:
             artist = artist_element.text.strip()
             title = track_element.text.strip()
-            # считаем количество совпадений слов запроса в artist и title
             match_count = sum(1 for word in query_words if word in (artist + " " + title).lower())
 
             tracks.append({
@@ -51,15 +60,12 @@ def search_tracks(query):
                 "matches": match_count
             })
 
-    # сортировка по количеству совпадений, потом по id
     tracks.sort(key=lambda x: (-x['matches'], x['id']))
 
-    # убираем поле matches перед возвратом
     for track in tracks:
         track.pop('matches')
 
     return tracks
-
 
 @app.route("/api/search")
 def search():
@@ -67,8 +73,10 @@ def search():
     if not query:
         return jsonify({"error": "Missing 'q' parameter"}), 400
 
+    log_query(query)  # Логируем запрос
     tracks = search_tracks(query)
     return jsonify(tracks)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
+

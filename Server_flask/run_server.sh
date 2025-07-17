@@ -1,11 +1,11 @@
-﻿#!/usr/bin/bash
+#!/usr/bin/bash
 
 MYENV="/root/myenv"
 FLASK_APP="/root/main.py"
 NGROK_BIN="/usr/local/bin/ngrok"
+TEST_MONITOR="/root/test.py"
 
 PORT=5000
-
 
 start_flask() {
   source $MYENV/bin/activate
@@ -14,12 +14,10 @@ start_flask() {
   deactivate
 }
 
-
 start_ngrok() {
   nohup $NGROK_BIN http $PORT --log=ngrok.log > /dev/null 2>&1 &
   echo $! > ngrok.pid
 }
-
 
 update_ngrok_url() {
   echo "Жду ngrok..."
@@ -34,25 +32,33 @@ update_ngrok_url() {
   done
 }
 
-
-stop_old_processes() {
-  if [ -f flask.pid ]; then
-    kill $(cat flask.pid) 2>/dev/null
-    rm flask.pid
-  fi
-  if [ -f ngrok.pid ]; then
-    kill $(cat ngrok.pid) 2>/dev/null
-    rm ngrok.pid
-  fi
+start_monitor() {
+  source $MYENV/bin/activate
+  nohup python3 $TEST_MONITOR > test.log 2>&1 &
+  echo $! > test.pid
+  deactivate
 }
 
+stop_old_processes() {
+  for pidfile in flask.pid ngrok.pid test.pid; do
+    if [ -f "$pidfile" ]; then
+      kill $(cat "$pidfile") 2>/dev/null
+      rm "$pidfile"
+    fi
+  done
+}
+
+# Основной запуск
 stop_old_processes
 start_flask
 sleep 3
 start_ngrok
 sleep 3
 update_ngrok_url
+start_monitor
 
-echo "server and ngrok runned"
-echo "address API: $(cat /root/current_address.txt)"
+echo "Все сервисы запущены"
+echo "Адрес API: $(cat /root/current_address.txt)"
 sleep infinity
+
+
