@@ -1,0 +1,8 @@
+version: "2"
+authtoken: 2zl59QUtU6Dznvk7i9RUieVwhuR_2SkHMwkvLuDxiu2mBRbKG
+tunnels:
+  api:
+    proto: http
+    addr: 5000
+    domain: mako-happy-adversely.ngrok-free.app
+

@@ -3,9 +3,8 @@
 MYENV="/root/myenv"
 FLASK_APP="/root/main.py"
 NGROK_BIN="/usr/local/bin/ngrok"
-TEST_MONITOR="/root/test.py"
-
 PORT=5000
+PUBLIC_URL="mako-happy-adversely.ngrok-free.app"  
 
 start_flask() {
   source $MYENV/bin/activate
@@ -15,28 +14,8 @@ start_flask() {
 }
 
 start_ngrok() {
-  nohup $NGROK_BIN http $PORT --log=ngrok.log > /dev/null 2>&1 &
+  nohup $NGROK_BIN start --all > ngrok.log 2>&1 &
   echo $! > ngrok.pid
-}
-
-update_ngrok_url() {
-  echo "Жду ngrok..."
-  while true; do
-    ADDRESS=$(curl -s http://127.0.0.1:4040/api/tunnels | grep -o 'https://[^"]*ngrok-free.app' | head -n 1)
-    if [ ! -z "$ADDRESS" ]; then
-      echo "$ADDRESS" > /root/current_address.txt
-      echo "Ngrok запущен: $ADDRESS"
-      break
-    fi
-    sleep 2
-  done
-}
-
-start_monitor() {
-  source $MYENV/bin/activate
-  nohup python3 $TEST_MONITOR > test.log 2>&1 &
-  echo $! > test.pid
-  deactivate
 }
 
 stop_old_processes() {
@@ -54,11 +33,13 @@ start_flask
 sleep 3
 start_ngrok
 sleep 3
-update_ngrok_url
 start_monitor
 
+# Запись и вывод URL
+echo "$PUBLIC_URL" > /root/current_address.txt
 echo "Все сервисы запущены"
-echo "Адрес API: $(cat /root/current_address.txt)"
+echo "Адрес API: $PUBLIC_URL"
+
 sleep infinity
 
 

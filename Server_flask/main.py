@@ -1,11 +1,10 @@
+# main.py
 from flask import Flask, request, jsonify
 import requests
 from bs4 import BeautifulSoup
-import os
 from datetime import datetime
 
 app = Flask(__name__)
-
 LOG_FILE = "server.log"
 
 def log_query(query):
@@ -17,15 +16,6 @@ def log_query(query):
 def index():
     return 'Сервер работает', 200
 
-@app.route("/api/address")
-def get_address():
-    if os.path.exists("current_address.txt"):
-        with open("current_address.txt", "r") as f:
-            address = f.read().strip()
-        return jsonify({"address": address})
-    else:
-        return jsonify({"error": "Address not found"}), 404
-
 def search_tracks(query):
     url = f"https://muzofond.fm/search/{query}"
     headers = {
@@ -35,8 +25,7 @@ def search_tracks(query):
     response = requests.get(url, headers=headers)
     soup = BeautifulSoup(response.text, 'html.parser')
 
-    query_words = query.lower().split("+")  # делим запрос на слова
-
+    query_words = query.lower().split("+")
     tracks = []
     play_buttons = soup.select("li.play")
 
@@ -73,10 +62,11 @@ def search():
     if not query:
         return jsonify({"error": "Missing 'q' parameter"}), 400
 
-    log_query(query)  # Логируем запрос
+    log_query(query)
     tracks = search_tracks(query)
     return jsonify(tracks)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
+
 

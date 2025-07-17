@@ -33,24 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Track> _tracks = [];
   bool _isLoading = false;
   List<DownloadStatus> _downloads = [];
-
-  Future<String?> _getApiAddress() async {
-    try {
-      final response = await http.get(
-        Uri.parse('http://192.168.0.140:5000/api/address'),
-      );
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return data['address'];
-      } else {
-        debugPrint('Не удалось получить адрес API');
-        return null;
-      }
-    } catch (e) {
-      debugPrint('Ошибка получения адреса API: $e');
-      return null;
-    }
-  }
+  final String serverUrl = 'https://mako-happy-adversely.ngrok-free.app';
 
   Future<void> _searchTracks() async {
     final query = _searchController.text.trim().toLowerCase();
@@ -62,18 +45,14 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     try {
-      final apiAddress = await _getApiAddress();
-      if (apiAddress == null) throw Exception('Адрес API не найден');
-
       final response = await http.get(
-        Uri.parse('$apiAddress/api/search?q=${Uri.encodeComponent(query)}'),
+        Uri.parse('$serverUrl/api/search?q=${Uri.encodeComponent(query)}'),
         headers: {'ngrok-skip-browser-warning': '69420'},
       );
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
 
-        // фильтрация по совпадению в artist или title
         final filteredTracks = data
             .map((item) => Track.fromJson(item))
             .where(
@@ -87,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _tracks = filteredTracks;
         });
       } else {
-        throw Exception('Ошибка сервера');
+        throw Exception('Ошибка сервера: ${response.statusCode}');
       }
     } catch (e) {
       debugPrint('Ошибка: $e');
