@@ -181,7 +181,7 @@ class _MenuScreenState extends State<MenuScreen> {
         content: const Text(
           'Поиск и скачивание музыки из Инернета\n\n'
           'Разработал: Buktop72\n'
-          'v1.4.0',
+          'v1.0.4',
         ),
         actions: [
           TextButton(
