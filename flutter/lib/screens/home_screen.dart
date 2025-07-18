@@ -79,13 +79,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _downloadTrack(Track track) async {
     final folderPath = await SettingsService.getFolderPath();
-
     if (folderPath == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Сначала выберите папку для загрузки в меню'),
-          ),
+          const SnackBar(content: Text('Сначала выберите папку для загрузки')),
         );
       }
       return;
@@ -97,9 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     final status = DownloadStatus(track: track);
-    setState(() {
-      _downloads.add(status);
-    });
+    setState(() => _downloads.add(status));
 
     try {
       await DownloadService.downloadFile(
@@ -109,33 +104,28 @@ class _HomeScreenState extends State<HomeScreen> {
         title: track.title,
         artist: track.artist,
         onProgress: (received, total) {
-          if (total != -1) {
-            final percent = (received / total * 100);
-            debugPrint(
-              'Скачивание ${track.title}: ${percent.toStringAsFixed(0)}%',
-            );
-
+          if (total != -1 && mounted) {
             setState(() {
-              status.progress = percent;
+              status.progress = (received / total * 100);
             });
           }
         },
       );
-
-      setState(() {
-        _downloads.remove(status);
-      });
     } catch (e) {
-      debugPrint('Ошибка при скачивании: $e');
-
-      setState(() {
-        status.isError = true;
-      });
-
+      print('Ошибка загрузки: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка при скачивании ${track.title}')),
-        );
+        setState(() {
+          status.isError = true;
+        });
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Ошибка: ${e.toString()}')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _downloads.removeWhere((item) => item.track == track);
+        });
       }
     }
   }
@@ -273,4 +263,6 @@ class DownloadStatus {
     this.isCompleted = false,
     this.isError = false,
   });
+
+  
 }

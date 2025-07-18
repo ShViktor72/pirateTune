@@ -55,22 +55,33 @@ class DownloadService {
   ) async {
     if (!File(filePath).existsSync()) return;
 
-    final tag = Tag(
-      tagType: TagType.FilePrimaryType,
-      pictures: [],
-      trackTitle: title,
-      trackArtist: artist,
-    );
+    try {
+      final tag = Tag(
+        tagType: TagType.FilePrimaryType,
+        pictures: [],
+        trackTitle: title,
+        trackArtist: artist,
+      );
 
-    await Taggy.writePrimary(path: filePath, tag: tag, keepOthers: true);
+      await Taggy.writePrimary(
+        path: filePath,
+        tag: tag,
+        keepOthers: true,
+      ).catchError((e) {
+        print('Ошибка записи тегов: $e');
+        return null; // Пропускаем ошибку
+      });
+    } catch (e) {
+      print('Критическая ошибка тегов: $e');
+    }
   }
 
   static Future<void> _checkAndroidPermissions() async {
     if (await Permission.storage.isGranted) return;
-    
+
     // Для Android 10+ (API 29+) используем manageExternalStorage
     if (await Permission.manageExternalStorage.isGranted) return;
-    
+
     final status = await Permission.manageExternalStorage.request();
     if (!status.isGranted) {
       throw Exception('Требуется разрешение на управление внешним хранилищем');
