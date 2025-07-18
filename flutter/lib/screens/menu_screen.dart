@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
 import '../services/settings_service.dart';
+import 'package:permission_handler/permission_handler.dart';
+import '../services/download_service.dart';
 
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
@@ -28,21 +30,51 @@ class _MenuScreenState extends State<MenuScreen> {
   }
 
   Future<void> _pickFolder() async {
-    String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
-    if (selectedDirectory != null) {
-      await SettingsService.saveFolderPath(selectedDirectory);
-      setState(() {
-        _selectedFolder = selectedDirectory;
-      });
+    // Для Android 10+ используем SAF
+    if (Platform.isAndroid) {
+      try {
+        final status = await Permission.manageExternalStorage.request();
+        if (!status.isGranted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Требуется разрешение на доступ к хранилищу'),
+            ),
+          );
+          return;
+        }
+
+        // Получаем стандартную папку Music
+        final musicDir = await DownloadService.getMusicDirectory();
+        if (musicDir != null) {
+          await SettingsService.saveFolderPath(musicDir);
+          setState(() {
+            _selectedFolder = musicDir;
+          });
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Выбрана папка: $musicDir')));
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Ошибка: $e')));
+      }
+    } else {
+      // Для других платформ используем стандартный выбор папки
+      String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
+      if (selectedDirectory != null) {
+        await SettingsService.saveFolderPath(selectedDirectory);
+        setState(() {
+          _selectedFolder = selectedDirectory;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: const Text('Меню')),
+      appBar: AppBar(centerTitle: true, title: const Text('Меню')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: SingleChildScrollView(
